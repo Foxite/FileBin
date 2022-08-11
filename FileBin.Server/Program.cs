@@ -1,5 +1,7 @@
 using FileBin.Server;
+using FileBin.Server.Config;
 using FileBin.Server.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -48,5 +50,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet("/", ctx => Task.FromResult(new RedirectResult(app.Configuration.GetValue<string>("IndexRedirect"), false)));
 
 app.Run();

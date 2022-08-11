@@ -1,4 +1,4 @@
-namespace FileBin.Server; 
+namespace FileBin.Server.Config; 
 
 public class AuthConfig {
 	public string Authority { get; set; }
