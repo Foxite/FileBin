@@ -1,30 +1,18 @@
 ﻿{
   "$schema": "https://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:48574",
-      "sslPort": 44388
-    }
-  },
   "profiles": {
     "FileBin.Server": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7192;http://localhost:5201",
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Authorization__Authority": "https://id.corsac.nl",
+        "Authorization__DiscoveryDocument": "https://id.corsac.nl/application/o/postman/.well-known/openid-configuration",
+        "Authorization__Audiences__0": "9087782df1b7989a6be7d5a727da52902028eec0",
+        "LocalFileStorage__StoragePath": "/home/foxite/filebintest"
       }
     }
   }

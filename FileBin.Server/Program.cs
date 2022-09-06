@@ -1,20 +1,23 @@
-using FileBin.Server;
 using FileBin.Server.Config;
 using FileBin.Server.Data;
-using Microsoft.AspNetCore.Mvc;
+using FileBin.Server.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<FileDbContext>(dbcob => dbcob.UseNpgsql(builder.Configuration.GetValue<string>("Database")));
+builder.Services.Configure<LocalFileStorage.Options>(builder.Configuration.GetSection("LocalFileStorage"));
+
+builder.Services.AddScoped<FileStorage, LocalFileStorage>();
+
+builder.Services.AddDbContext<FileDbContext>(dbcob => {
+	string connectionString = builder.Configuration.GetValue<string>("Database");
+	dbcob.UseNpgsql(connectionString);
+});
 
 var authConfig = builder.Configuration.GetSection("Authorization").Get<AuthConfig>();
 
@@ -32,13 +35,26 @@ builder.Services
 
 builder.Services.AddAuthorization(options => {
 	options.AddPolicy("Upload", policy => {
+		if (authConfig.UserRole != null) {
+			policy.RequireAuthenticatedUser();
+			policy.RequireRole(authConfig.UserRole);
+			//policy.RequireClaim("scope", authConfig.Scope);
+		} else {
+			policy.RequireAssertion(_ => true);
+		}
+	});
+	
+	options.AddPolicy("Delete", policy => {
 		policy.RequireAuthenticatedUser();
-		policy.RequireRole(authConfig.Role);
-		policy.RequireClaim("scope", authConfig.Scope);
 	});
 });
 
 var app = builder.Build();
+
+using (IServiceScope scope = app.Services.CreateScope()) {
+	var dbContext = scope.ServiceProvider.GetRequiredService<FileDbContext>();
+	await dbContext.Database.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
@@ -50,6 +66,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/", ctx => Task.FromResult(new RedirectResult(app.Configuration.GetValue<string>("IndexRedirect"), false)));
+app.MapGet("/", ctx => {
+	ctx.Response.Redirect(app.Configuration.GetValue<string>("IndexRedirect"));
+	
+	return Task.CompletedTask;
+});
 
 app.Run();

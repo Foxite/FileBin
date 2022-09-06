@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+  database:
+    image: 'postgres:13.3'
+    environment:
+      POSTGRES_DB: filebin-data
+      POSTGRES_USER: filebin
+      POSTGRES_PASSWORD: test123
+    networks:
+      - filebin-network
+    ports:
+      - "5432:5432"
+    volumes:
+      - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+  
+  service:
+    build:
+      context: .
+      dockerfile: FileBin.Server/Dockerfile
+    environment:
+      Authorization__Authority: https://id.corsac.nl
+      Authorization__DiscoveryDocument: https://id.corsac.nl/application/o/postman/.well-known/openid-configuration
+      Authorization__Audiences: 9087782df1b7989a6be7d5a727da52902028eec0
+      Database: Host=database; Database=filebin-data; Port=5432; Username=filebin; Password=test123
+    
+networks:
+  filebin-network:
+
+volumes:
+  database-data:
