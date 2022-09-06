@@ -14,6 +14,8 @@ jobs:
       uses: elgohr/Publish-Docker-Github-Action@3.04
       with:
         name: filebin-server
+        dockerfile: FileBin.Server/Dockerfile
+        context: .
         registry: ${{ secrets.PUSH_REPO }}
         username: ${{ secrets.PUSH_USER }}
         password: ${{ secrets.PUSH_PASSWD }}
