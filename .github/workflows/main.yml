@@ -13,8 +13,8 @@ jobs:
     - name: Publish Docker
       uses: elgohr/Publish-Docker-Github-Action@3.04
       with:
-        name: hertej-bot
-        context: HertejBot
+        name: filebin-server
+        context: FileBin.Server
         registry: ${{ secrets.PUSH_URL }}
         username: ${{ secrets.PUSH_USER }}
         password: ${{ secrets.PUSH_PASSWD }}
