@@ -5,6 +5,6 @@ namespace FileBin.Server.Storage;
 
 public abstract class FileStorage {
 	public abstract IActionResult GetFile(FileData fileData);
-	public abstract Task<string> StoreFileAsync(FileData fileData, Stream fileStream);
+	public abstract Task StoreFileAsync(FileData fileData, Stream fileStream);
 	public abstract void Delete(FileData fileData);
 }

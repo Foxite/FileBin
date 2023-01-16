@@ -13,49 +13,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<LocalFileStorage.Options>(builder.Configuration.GetSection("LocalFileStorage"));
+builder.Services.Configure<AuthConfig>(builder.Configuration.GetSection("Authorization"));
 
 builder.Services.AddScoped<FileStorage, LocalFileStorage>();
 
 builder.Services.AddDbContext<FileDbContext>(dbcob => {
 	string connectionString = builder.Configuration.GetValue<string>("Database");
 	dbcob.UseNpgsql(connectionString);
-});
-
-var authConfig = builder.Configuration.GetSection("Authorization").Get<AuthConfig>();
-
-builder.Services
-	.AddAuthentication(options => {
-		options.DefaultScheme = "Cookies";
-		options.DefaultChallengeScheme = "Bearer";
-	})
-	.AddCookie()
-	.AddOAuth("Bearer", options => {
-		options.SignInScheme = "Cookies";
-		options.CallbackPath = "/signin";
-		options.TokenEndpoint = authConfig.TokenEndpoint;
-		options.AuthorizationEndpoint = authConfig.AuthEndpoint;
-		options.UserInformationEndpoint = authConfig.UserEndpoint;
-		options.ClientId = authConfig.ClientId;
-		options.ClientSecret = authConfig.ClientSecret;
-		foreach (string scope in authConfig.Scopes) {
-			options.Scope.Add(scope);
-		}
-	});
-
-builder.Services.AddAuthorization(options => {
-	options.AddPolicy("Upload", policy => {
-		if (authConfig.UserRole != null) {
-			policy.RequireAuthenticatedUser();
-			policy.RequireRole(authConfig.UserRole);
-			//policy.RequireClaim("scope", authConfig.Scope);
-		} else {
-			policy.RequireAssertion(_ => true);
-		}
-	});
-	
-	options.AddPolicy("Delete", policy => {
-		policy.RequireAuthenticatedUser();
-	});
 });
 
 var app = builder.Build();

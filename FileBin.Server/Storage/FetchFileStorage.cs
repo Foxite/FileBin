@@ -8,7 +8,7 @@ public abstract class FetchFileStorage : FileStorage {
 	public override IActionResult GetFile(FileData fileData) {
 		return new FileStreamResult(GetStream(fileData), fileData.MimeType) {
 			FileDownloadName = fileData.ServeInline ? null : fileData.Filename,
-			EntityTag = EntityTagHeaderValue.Parse('"' + fileData.StorageId + '"'),
+			EntityTag = EntityTagHeaderValue.Parse('"' + fileData.Id.ToString() + '"'),
 			LastModified = fileData.CreatedAt
 		};
 	}
