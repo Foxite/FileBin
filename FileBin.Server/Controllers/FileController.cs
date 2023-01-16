@@ -1,10 +1,8 @@
-using System.Net.Mime;
 using System.Security.Claims;
 using FileBin.Server.Config;
 using FileBin.Server.Data;
 using FileBin.Server.Storage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
