@@ -1,7 +1,9 @@
 using FileBin.Server.Config;
 using FileBin.Server.Data;
 using FileBin.Server.Storage;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -22,15 +24,22 @@ builder.Services.AddDbContext<FileDbContext>(dbcob => {
 var authConfig = builder.Configuration.GetSection("Authorization").Get<AuthConfig>();
 
 builder.Services
-	.AddAuthentication("Bearer")
-	.AddJwtBearer("Bearer", options => {
-		options.Authority = authConfig.Authority;
-		options.RequireHttpsMetadata = true;
-		options.TokenValidationParameters = new TokenValidationParameters {
-			ValidateAudience = true,
-			ValidAudiences = authConfig.Audiences
-		};
-		options.MetadataAddress = authConfig.DiscoveryDocument ?? authConfig.Authority + "/.well-known/openid-configuration";
+	.AddAuthentication(options => {
+		options.DefaultScheme = "Cookies";
+		options.DefaultChallengeScheme = "Bearer";
+	})
+	.AddCookie()
+	.AddOAuth("Bearer", options => {
+		options.SignInScheme = "Cookies";
+		options.CallbackPath = "/signin";
+		options.TokenEndpoint = authConfig.TokenEndpoint;
+		options.AuthorizationEndpoint = authConfig.AuthEndpoint;
+		options.UserInformationEndpoint = authConfig.UserEndpoint;
+		options.ClientId = authConfig.ClientId;
+		options.ClientSecret = authConfig.ClientSecret;
+		foreach (string scope in authConfig.Scopes) {
+			options.Scope.Add(scope);
+		}
 	});
 
 builder.Services.AddAuthorization(options => {
