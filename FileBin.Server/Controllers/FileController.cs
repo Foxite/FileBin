@@ -1,4 +1,6 @@
+using System.Net;
 using System.Security.Claims;
+using System.Text;
 using FileBin.Server.Config;
 using FileBin.Server.Data;
 using FileBin.Server.Storage;
@@ -23,7 +25,7 @@ public class FileController : ControllerBase {
 	}
 
 	[HttpGet("{id:guid}")]
-	public async Task<IActionResult> Download(Guid id) {
+	public async Task<IActionResult> Download([FromRoute] Guid id) {
 		FileData? fileData = await m_DbContext.Files.FindAsync(id);
 		if (fileData != null) {
 			return m_Storage.GetFile(fileData);
@@ -33,8 +35,12 @@ public class FileController : ControllerBase {
 	}
 
 	[HttpPost("/")]
-	[Authorize("Upload")]
-	public async Task<IActionResult> Upload([FromQuery] string filename, [FromQuery] bool serveInline, [FromQuery] DateTime? expiration = null) {
+	public async Task<IActionResult> Upload([FromQuery] string? filename, [FromQuery] DateTime? expiration = null) {
+		var authResult = Authorize();
+		if (authResult != null) {
+			return authResult;
+		}
+		
 		// TODO: optionally filter mime types such as text/html and text/javascript
 		string? mimeType = HttpContext.Request.Headers.ContentType.FirstOrDefault();
 
@@ -46,41 +52,53 @@ public class FileController : ControllerBase {
 			Filename = filename,
 			Expiration = expiration,
 			MimeType = mimeType,
-			ServeInline = serveInline,
-			CreatedAt = DateTime.UtcNow,
-			OwnerId = HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value
+			CreatedAt = DateTime.UtcNow
 		};
 		
-		string storageId;
-		try {
-			storageId = await m_Storage.StoreFileAsync(fileData, HttpContext.Request.Body);
-		} catch (IOException) {
-			return Conflict("A file with that hash already exists.");
-		}
-		fileData.StorageId = storageId;
 		m_DbContext.Files.Add(fileData);
 		await m_DbContext.SaveChangesAsync();
+		await m_Storage.StoreFileAsync(fileData, HttpContext.Request.Body);
 		return Ok(fileData.Id.ToString());
 	}
 	
 	[HttpDelete("{id:guid}")]
-	[Authorize("Delete")]
 	public async Task<IActionResult> Delete([FromRoute] Guid id) {
+		var authResult = Authorize();
+		if (authResult != null) {
+			return authResult;
+		}
+		
 		FileData? fileData = await m_DbContext.Files.FindAsync(id);
 
 		if (fileData == null) {
 			return NotFound();
 		}
 		
-		m_Logger.LogInformation("User identity name: {UserIdentityName}", HttpContext.User.Identity?.Name ?? "null");
-		if (!((fileData.OwnerId != null && fileData.OwnerId == HttpContext.User.Identity?.Name) || HttpContext.User.IsInRole(m_AuthConfig.Value.AdminRole))) {
-			return Forbid();
-		}
-
 		m_Storage.Delete(fileData);
 		m_DbContext.Files.Remove(fileData);
 		await m_DbContext.SaveChangesAsync();
 		
 		return NoContent();
+	}
+
+	private IActionResult? Authorize() {
+		string? authValue = HttpContext.Request.Headers.Authorization.FirstOrDefault();
+		if (authValue == null || !authValue.StartsWith("Basic ")) {
+			return Unauthorized();
+		}
+
+		byte[] authValueDecoded;
+		try {
+			authValueDecoded = Convert.FromBase64String(authValue[("Basic ".Length)..]);
+		} catch (FormatException) {
+			return BadRequest();
+		}
+
+		string[] authParsed = Encoding.UTF8.GetString(authValueDecoded).Split(":");
+		if (authParsed[0] != m_AuthConfig.Value.Username || authParsed[1] != m_AuthConfig.Value.Password) {
+			return StatusCode((int) HttpStatusCode.Forbidden);
+		}
+
+		return null;
 	}
 }

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FileBin.Server.Migrations
 {
     [DbContext(typeof(FileDbContext))]
-    [Migration("20220902160521_InitialCreate")]
+    [Migration("20230116225135_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,20 +37,9 @@ namespace FileBin.Server.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Filename")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("MimeType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OwnerId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("ServeInline")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("StorageId")
                         .IsRequired()
                         .HasColumnType("text");
 

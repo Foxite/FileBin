@@ -35,20 +35,9 @@ namespace FileBin.Server.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Filename")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("MimeType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OwnerId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("ServeInline")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("StorageId")
                         .IsRequired()
                         .HasColumnType("text");
 

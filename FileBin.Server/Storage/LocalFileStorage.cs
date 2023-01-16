@@ -12,36 +12,23 @@ public class LocalFileStorage : FetchFileStorage {
 		m_Options = options;
 	}
 	
-	public async override Task<string> StoreFileAsync(FileData fileData, Stream download) {
+	public async override Task StoreFileAsync(FileData fileData, Stream download) {
 		string tempPath = Path.GetTempFileName();
-		bool tempFileCreated = false;
 		try {
-			string hash;
-			await using (var hashDownload = new HashedStream(download)) {
-				await using (FileStream file = File.OpenWrite(tempPath)) {
-					tempFileCreated = true;
-					await hashDownload.CopyToAsync(file);
-				}
-
-				hash = hashDownload.ReadHash128.ToString();
+			await using (FileStream file = File.OpenWrite(GetPath(fileData.Id.ToString()))) {
+				await download.CopyToAsync(file);
 			}
-
-			File.Move(tempPath, GetPath(hash));
-			tempFileCreated = false;
-			return hash;
 		} finally {
-			if (tempFileCreated) {
-				File.Delete(tempPath);
-			}
+			File.Delete(tempPath);
 		}
 	}
 
 	public override void Delete(FileData fileData) {
-		File.Delete(GetPath(fileData.StorageId));
+		File.Delete(GetPath(fileData.Id.ToString()));
 	}
 
 	protected override Stream GetStream(FileData fileData) {
-		return File.OpenRead(GetPath(fileData.StorageId));
+		return File.OpenRead(GetPath(fileData.Id.ToString()));
 	}
 
 	private string GetPath(string hash) {

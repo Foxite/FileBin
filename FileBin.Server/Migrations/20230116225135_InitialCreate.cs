@@ -14,12 +14,9 @@ namespace FileBin.Server.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Filename = table.Column<string>(type: "text", nullable: false),
+                    Filename = table.Column<string>(type: "text", nullable: true),
                     Expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    OwnerId = table.Column<string>(type: "text", nullable: true),
-                    StorageId = table.Column<string>(type: "text", nullable: false),
                     MimeType = table.Column<string>(type: "text", nullable: false),
-                    ServeInline = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
